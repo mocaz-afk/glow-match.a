@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Kulit Sederhana</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: auto; background-color: #e6e9f0; }
+        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        
+        /* Gaya Tombol Aksi */
+        .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .action-buttons button { width: 50%; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
+        
+        /* Tombol Utama */
+        #btnOpenFile { background-color: #f39c12; color: white; }
+        #btnOpenCamera { background-color: #2ecc71; color: white; }
+        
+        /* Tombol Analisis */
+        #analyzeButton { width: 100%; padding: 12px; margin-top: 20px; border-radius: 6px; border: none; font-size: 16px; background-color: #3498db; color: white; }
+        #analyzeButton:hover:not([disabled]) { background-color: #2980b9; } 
+        #analyzeButton[disabled] { background-color: #ccc; cursor: not-allowed; } 
+
+        .result { 
+            margin-top: 30px; 
+            padding: 20px; 
+            border: 1px solid #3498db; 
+            border-radius: 8px; 
+            background-color: #f8f9fa; 
+            font-size: 14px; 
+            line-height: 1.6;
+        }
+        .result h3 { color: #3498db; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-top: 15px; }
+        .loading { text-align: center; margin-top: 20px; color: #3498db; font-weight: bold; display: none; }
+        img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 15px; }
+        
+        /* Input file disembunyikan dan hanya dipicu oleh tombol */
+        #fileInputCamera, #fileInputFile { display: none; } 
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Skin Scan & Deteksi Kulit</h1>
+        <p>Silakan pilih sumber gambar untuk analisis cepat.</p>
+        
+        <div class="action-buttons">
+            <button id="btnOpenFile" onclick="triggerFilePicker()">Pilih File Gambar</button>
+            <button id="btnOpenCamera" onclick="triggerCamera()">Buka Kamera</button>
+        </div>
+
+        <input type="file" id="fileInputFile" accept="image/*" onchange="previewImage(event)">
+        <input type="file" id="fileInputCamera" accept="image/*" onchange="previewImage(event)" capture="user">
+
+        <img id="imagePreview" src="" alt="Pratinjau Gambar" style="display: none;">
+        
+        <button id="analyzeButton" onclick="analyzeSkin()" disabled>Mulai Analisis Deteksi Kulit</button>
+
+        <div class="loading" id="loading">
+            <p><strong>Fase 1:</strong> Menganalisis Gambar dan Data Kulit...</p>
+        </div>
+        
+        <h2>Hasil Deteksi Kulit:</h2>
+        <div class="result" id="analysisResult">
+            Hasil analisis akan muncul di sini.
+        </div>
+    </div>
+
+    <script>
+        const analyzeButton = document.getElementById('analyzeButton');
+        const fileInputCamera = document.getElementById('fileInputCamera');
+        const fileInputFile = document.getElementById('fileInputFile');
+
+        function triggerFilePicker() {
+            fileInputCamera.value = null; 
+            fileInputFile.click();
+        }
+
+        function triggerCamera() {
+            fileInputFile.value = null; 
+            fileInputCamera.click();
+        }
+        
+        function previewImage(event) {
+            const preview = document.getElementById('imagePreview');
+            const file = event.target.files[0];
+
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+                analyzeButton.disabled = false;
+            } else {
+                preview.style.display = 'none';
+                analyzeButton.disabled = true;
+            }
+        }
+
+        // Fungsi BARU untuk merender data analisis dalam Bahasa Indonesia
+        function renderAnalysis(data) {
+            let html = '<h3>Ringkasan Hasil Deteksi</h3>';
+            
+            // Tentukan deskripsi untuk Skor Jerawat
+            let acneDescription = '';
+            if (data.acne_score == 1) {
+                acneDescription = 'Sangat Rendah (Hampir bersih/Tidak ada jerawat aktif)';
+            } else if (data.acne_score == 2) {
+                acneDescription = 'Rendah (Beberapa komedo atau jerawat kecil)';
+            } else if (data.acne_score == 3) {
+                acneDescription = 'Sedang (Jerawat merata, mungkin ada beberapa pustula/papula)';
+            } else if (data.acne_score == 4) {
+                acneDescription = 'Tinggi (Banyak jerawat aktif, kemerahan signifikan)';
+            } else if (data.acne_score == 5) {
+                acneDescription = 'Parah (Jerawat meradang, nodul, atau kistik)';
+            }
+
+            // Tentukan keterangan untuk Tipe Kulit
+            let skinTypeKeterangan = '';
+            if (data.skin_type === 'Oily') {
+                skinTypeKeterangan = 'Cenderung memproduksi sebum berlebihan, sering terlihat mengkilap. Membutuhkan kontrol minyak.';
+            } else if (data.skin_type === 'Dry') {
+                skinTypeKeterangan = 'Kekurangan minyak alami dan air, sering terasa kencang dan kusam. Membutuhkan hidrasi intensif.';
+            } else if (data.skin_type === 'Combination') {
+                skinTypeKeterangan = 'Berminyak di area T-zone (dahi, hidung, dagu) dan kering/normal di area pipi. Perlu penanganan berbeda di setiap zona.';
+            } else if (data.skin_type === 'Normal') {
+                skinTypeKeterangan = 'Keseimbangan minyak dan air baik, jarang memiliki masalah sensitivitas serius. Fokus pada perawatan pencegahan.';
+            }
+
+            // Bagian Ringkasan
+            html += `<p><b>ID Analisis:</b> ${data.analysis_id || 'N/A'}</p>`;
+            html += `<p><b>Status Deteksi:</b> <span style="color: green;">${data.status.toUpperCase() || 'N/A'}</span></p>`;
+            
+            html += '<h3>Detail Analisis Kulit</h3>';
+            html += `<ul>`;
+            
+            // 1. Tipe Kulit
+            html += `<li><b>Tipe Kulit Terdeteksi:</b> <b>${data.skin_type || 'N/A'}</b> <br>
+                     <span style="font-size: 0.9em; color: #555;">Keterangan: ${skinTypeKeterangan}</span></li>`;
+            
+            // 2. Masalah Utama
+            html += `<li><b>Masalah Utama yang Ditemukan:</b> <b>${data.main_concern || 'N/A'}</b></li>`;
+            
+            // 3. Skor Jerawat
+            html += `<li><b>Tingkat Jerawat (Skala 1-5):</b> <b>${data.acne_score || 'N/A'}</b> <br>
+                     <span style="font-size: 0.9em; color: #555;">Status: ${acneDescription}</span></li>`;
+            
+            // 4. Skor Pigmentasi
+            html += `<li><b>Skor Pigmentasi (0-100):</b> <b>${data.pigmentation_score || 'N/A'}</b> <br>
+                     <span style="font-size: 0.9em; color: #555;">(Angka yang lebih tinggi menunjukkan tingkat noda hitam, flek, atau ketidakrataan warna yang lebih jelas.)</span></li>`;
+            
+            // 5. Kulit Sensitif
+            html += `<li><b>Indikasi Kulit Sensitif:</b> <b>${data.is_sensitive ? 'YA' : 'TIDAK'}</b></li>`;
+            html += `</ul>`;
+
+            return html;
+        }
+
+        async function analyzeSkin() {
+            const fileInput = fileInputCamera.files.length > 0 ? fileInputCamera : fileInputFile;
+            const file = fileInput.files[0];
+            
+            const resultDiv = document.getElementById('analysisResult');
+            const loadingDiv = document.getElementById('loading');
+
+            if (!file) {
+                alert('Silakan pilih atau ambil file gambar terlebih dahulu.');
+                return;
+            }
+
+            analyzeButton.disabled = true; 
+            
+            const formData = new FormData();
+            formData.append('skinImage', file);
+
+            resultDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.analysis && typeof data.analysis === 'object') {
+                    resultDiv.innerHTML = renderAnalysis(data.analysis);
+                } else {
+                    resultDiv.innerHTML = `Error: Data analisis tidak valid.`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `Terjadi kesalahan saat menghubungi server: ${error.message}`;
+                console.error('Error:', error);
+            } finally {
+                loadingDiv.style.display = 'none';
+                analyzeButton.disabled = false; 
+            }
+        }
+    </script>
+</body>
+</html>
