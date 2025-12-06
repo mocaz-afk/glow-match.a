@@ -1,0 +1,9 @@
+[build]
+  # Perintah ini memberitahu Netlify untuk menginstal Node modules
+  command = "npm install"
+  # Perintah ini memberitahu Netlify di mana kode frontend Anda berada
+  publish = "." 
+
+[functions]
+  # Perintah ini memberitahu Netlify di mana mencari kode serverless Anda
+  directory = "netlify/functions"
